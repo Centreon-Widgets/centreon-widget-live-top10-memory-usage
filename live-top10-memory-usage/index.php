@@ -45,15 +45,13 @@ require_once $centreon_path . 'www/class/centreonHost.class.php';
 
 session_start();
 
-//load smarty
-require_once $centreon_path . 'GPL_LIB/Smarty/libs/Smarty.class.php';
-
 if (!isset($_SESSION['centreon']) || !isset($_REQUEST['widgetId'])) {
     exit;
 }
 
 $centreon = $_SESSION['centreon'];
 $widgetId = $_REQUEST['widgetId'];
+$grouplistStr = '';
 
 try {
     global $pearDB;
@@ -113,6 +111,8 @@ $in = 0;
 
 function getUnit($in)
 {
+    $return = null;
+
     if ($in == 0) {
         $return = "B";
     } else if ($in == 1) {
@@ -124,6 +124,7 @@ function getUnit($in)
     } else if ($in == 4) {
         $return = "TB";
     }
+
     return $return;
 }
 
@@ -149,5 +150,3 @@ $template->assign('preferences', $preferences);
 $template->assign('autoRefresh', $autoRefresh);
 $template->assign('data', $data);
 $template->display('table_top10memory.ihtml');
-?>
-
