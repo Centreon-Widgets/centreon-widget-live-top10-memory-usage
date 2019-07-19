@@ -85,8 +85,8 @@ $query = "SELECT
         i.host_name,
         i.service_description,
         i.service_id, i.host_id,
-        m.current_value/max as ratio,
-        max-current_value as remaining_space,
+        m.current_value/max AS ratio,
+        max-current_value AS remaining_space,
         s.state AS status
     FROM
         metrics m,
