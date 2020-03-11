@@ -62,7 +62,7 @@ try {
 
     $widgetObj = new CentreonWidget($centreon, $db_centreon);
     $preferences = $widgetObj->getWidgetPreferences($widgetId);
-    $autoRefresh =  (int) $preferences['refresh_interval'];
+    $autoRefresh = (int) $preferences['refresh_interval'];
     if ($autoRefresh < 5) {
         $autoRefresh = 30;
     }
