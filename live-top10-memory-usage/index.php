@@ -1,7 +1,7 @@
 <?php
 /**
- * Copyright 2005-2011 MERETHIS
- * Centreon is developped by : Julien Mathis and Romain Le Merlus under
+ * Copyright 2005-2019 Centreon
+ * Centreon is developed by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -50,18 +50,21 @@ if (!isset($_SESSION['centreon']) || !isset($_REQUEST['widgetId'])) {
 }
 
 $centreon = $_SESSION['centreon'];
-$widgetId = $_REQUEST['widgetId'];
+$widgetId = filter_var($_REQUEST['widgetId'], FILTER_VALIDATE_INT);
 $grouplistStr = '';
 
 try {
+    if ($widgetId === false) {
+        throw new InvalidArgumentException('Widget ID must be an integer');
+    }
     $db_centreon = $dependencyInjector['configuration_db'];
     $db = $dependencyInjector['realtime_db'];
 
     $widgetObj = new CentreonWidget($centreon, $db_centreon);
     $preferences = $widgetObj->getWidgetPreferences($widgetId);
-    $autoRefresh = 0;
-    if (isset($preferences['refresh_interval'])) {
-        $autoRefresh = $preferences['refresh_interval'];
+    $autoRefresh = (int) $preferences['refresh_interval'];
+    if ($autoRefresh < 5) {
+        $autoRefresh = 30;
     }
 
 } catch (Exception $e) {
@@ -86,45 +89,60 @@ $template = initSmartyTplForPopup($path, $template, "./", $centreon_path);
 
 $data = array();
 
-$query = "SELECT i.host_name, i.service_description, i.service_id, i.host_id, m.current_value/max as ratio, max-current_value as remaining_space, s.state AS status "
-        ."FROM metrics m, hosts h "
-        .($preferences['host_group'] ? ", hosts_hostgroups hg " : "")
-        .($centreon->user->admin == 0 ? ", centreon_acl acl " : "")
-        ." , index_data i "
-        ."LEFT JOIN services s ON s.service_id  = i.service_id AND s.enabled = 1 "
-        ."WHERE i.service_description LIKE '%".$preferences['service_description']."%' "
-        ."AND i.id = m.index_id "
-        ."AND m.metric_name LIKE '%".$preferences['metric_name']."%' "
-        ."AND i.host_id = h.host_id "
-        .($preferences['host_group'] ? "AND hg.hostgroup_id = ".$preferences['host_group']." AND i.host_id = hg.host_id " : "");
+$query = "SELECT
+        i.host_name,
+        i.service_description,
+        i.service_id, i.host_id,
+        m.current_value/max AS ratio,
+        max-current_value AS remaining_space,
+        s.state AS status
+    FROM
+        metrics m,
+        hosts h "
+        . ($preferences['host_group'] ? ", hosts_hostgroups hg " : "")
+        . ($centreon->user->admin == 0 ? ", centreon_acl acl " : "")
+        . " , index_data i
+    LEFT JOIN services s ON s.service_id  = i.service_id AND s.enabled = 1
+    WHERE i.service_description LIKE '%" . $preferences['service_description'] . "%'
+        AND i.id = m.index_id
+        AND m.metric_name LIKE '%" . $preferences['metric_name'] . "%'
+        AND i.host_id = h.host_id "
+        . ($preferences['host_group']
+            ? "AND hg.hostgroup_id = " . $preferences['host_group'] . " AND i.host_id = hg.host_id " : "");
 if ($centreon->user->admin == 0) {
-$query .="AND i.host_id = acl.host_id "
-        ."AND i.service_id = acl.service_id "
-        ."AND acl.group_id IN (" .($grouplistStr != "" ? $grouplistStr : 0). ")";
+    $query .= "AND i.host_id = acl.host_id
+        AND i.service_id = acl.service_id
+        AND acl.group_id IN (" . ($grouplistStr != "" ? $grouplistStr : 0) . ")";
 }
-$query .="AND s.enabled = 1 "
-        ."AND h.enabled = 1 "
-        ."GROUP BY i.host_id "
-        ."ORDER BY ratio DESC "
-        ."LIMIT ".$preferences['nb_lin'].";";
+$query .= "AND s.enabled = 1
+        AND h.enabled = 1
+    GROUP BY i.host_id
+    ORDER BY ratio DESC
+    LIMIT " . $preferences['nb_lin'] . ";";
 
 $numLine = 1;
 $in = 0;
 
 function getUnit($in)
 {
-    $return = null;
-
-    if ($in == 0) {
-        $return = "B";
-    } else if ($in == 1) {
-        $return = "KB";
-    } else if ($in == 2) {
-        $return = "MB";
-    } else if ($in == 3) {
-        $return = "GB";
-    } else if ($in == 4) {
-        $return = "TB";
+    switch ($in) {
+        case 0:
+            $return = "B";
+            break;
+        case 1:
+            $return = "KB";
+            break;
+        case 2:
+            $return = "MB";
+            break;
+        case 3:
+            $return = "GB";
+            break;
+        case 4:
+            $return = "TB";
+            break;
+        default:
+            $return = null;
     }
 
     return $return;
