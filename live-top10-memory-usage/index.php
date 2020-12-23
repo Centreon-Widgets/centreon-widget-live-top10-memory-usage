@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright 2005-2019 Centreon
+
+/*
+ * Copyright 2005-2020 Centreon
  * Centreon is developed by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
  *
@@ -19,11 +20,11 @@
  * combined work based on this program. Thus, the terms and conditions of the GNU
  * General Public License cover the whole combination.
  *
- * As a special exception, the copyright holders of this program give MERETHIS
+ * As a special exception, the copyright holders of this program give Centreon
  * permission to link this program with independent modules to produce an executable,
  * regardless of the license terms of these independent modules, and to copy and
- * distribute the resulting executable under terms of MERETHIS choice, provided that
- * MERETHIS also meet, for each linked independent module, the terms  and conditions
+ * distribute the resulting executable under terms of Centreon choice, provided that
+ * Centreon also meet, for each linked independent module, the terms  and conditions
  * of the license of that module. An independent module is a module which is not
  * derived from this program. If you modify this program, you may extend this
  * exception to your version of the program, but you are not obliged to do so. If you
@@ -62,7 +63,7 @@ try {
 
     $widgetObj = new CentreonWidget($centreon, $db_centreon);
     $preferences = $widgetObj->getWidgetPreferences($widgetId);
-    $autoRefresh = (int) $preferences['refresh_interval'];
+    $autoRefresh = (int)$preferences['refresh_interval'];
     if ($autoRefresh < 5) {
         $autoRefresh = 30;
     }
@@ -99,16 +100,16 @@ $query = "SELECT
     FROM
         metrics m,
         hosts h "
-        . ($preferences['host_group'] ? ", hosts_hostgroups hg " : "")
-        . ($centreon->user->admin == 0 ? ", centreon_acl acl " : "")
-        . " , index_data i
+    . ($preferences['host_group'] ? ", hosts_hostgroups hg " : "")
+    . ($centreon->user->admin == 0 ? ", centreon_acl acl " : "")
+    . " , index_data i
     LEFT JOIN services s ON s.service_id  = i.service_id AND s.enabled = 1
     WHERE i.service_description LIKE '%" . $preferences['service_description'] . "%'
         AND i.id = m.index_id
         AND m.metric_name LIKE '%" . $preferences['metric_name'] . "%'
         AND i.host_id = h.host_id "
-        . ($preferences['host_group']
-            ? "AND hg.hostgroup_id = " . $preferences['host_group'] . " AND i.host_id = hg.host_id " : "");
+    . ($preferences['host_group']
+        ? "AND hg.hostgroup_id = " . $preferences['host_group'] . " AND i.host_id = hg.host_id " : "");
 if ($centreon->user->admin == 0) {
     $query .= "AND i.host_id = acl.host_id
         AND i.service_id = acl.service_id
