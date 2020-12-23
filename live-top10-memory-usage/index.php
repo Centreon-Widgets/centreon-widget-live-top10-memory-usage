@@ -43,6 +43,7 @@ require_once $centreon_path . 'www/class/centreonUtils.class.php';
 require_once $centreon_path . 'www/class/centreonACL.class.php';
 require_once $centreon_path . 'www/class/centreonHost.class.php';
 require_once $centreon_path . 'bootstrap.php';
+require_once __DIR__ . '/src/function.php';
 
 session_start();
 
@@ -67,7 +68,6 @@ try {
     if ($autoRefresh < 5) {
         $autoRefresh = 30;
     }
-
 } catch (Exception $e) {
     echo $e->getMessage() . "<br/>";
     exit;
@@ -123,31 +123,6 @@ $query .= "AND s.enabled = 1
 
 $numLine = 1;
 $in = 0;
-
-function getUnit($in)
-{
-    switch ($in) {
-        case 0:
-            $return = "B";
-            break;
-        case 1:
-            $return = "KB";
-            break;
-        case 2:
-            $return = "MB";
-            break;
-        case 3:
-            $return = "GB";
-            break;
-        case 4:
-            $return = "TB";
-            break;
-        default:
-            $return = null;
-    }
-
-    return $return;
-}
 
 $res = $db->query($query);
 
